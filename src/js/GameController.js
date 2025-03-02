@@ -11,8 +11,8 @@ import Vampire from "./characters/Vampire";
 import Zombie from "./characters/Zombie";
 
 export default class GameController {
-  static charactersPlayer = [Bowman, Swordsman, Magician, Daemon, Undead, Vampire, Zombie];
-  static charactersOpponent = [Bowman, Swordsman, Magician, Daemon, Undead, Vampire, Zombie];  
+  static charactersPlayer = [Bowman, Swordsman, Magician];
+  static charactersOpponent = [Daemon, Undead, Vampire, Zombie];  
   static characterTypes = {
     bowman: Bowman,
     swordsman: Swordsman,
@@ -26,7 +26,7 @@ export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    this.characterCount = 1;
+    this.characterCount = 3;
     this.currentLevel;    
     this.dataCharacterByPosition = new Map();
     this.selectedCharacter = undefined;
@@ -157,8 +157,6 @@ export default class GameController {
   startGame() {
     this.playerTurn = true;
     this.currentLevel = 1;
-    this.gamePlay.boardSize = 4;
-    this.characterCount = 1;
     this.dataCharacterByPosition = new Map();
     this.selectedCharacter = undefined;    
     const teamPlayer = generateTeam(GameController.charactersPlayer, this.currentLevel, this.characterCount);
@@ -169,14 +167,12 @@ export default class GameController {
   }
 
   movingNextLevel() {
-    this.gamePlay.boardSize += 1;
-    this.characterCount += 1;
     this.currentLevel += 1;
     const teamPlayerOld = this.teamComposition(true);
     for (const character of teamPlayerOld.characters) {
       character.levelUp();
     }
-    const teamPlayer = generateTeam(GameController.charactersPlayer, this.currentLevel - 1, this.characterCount - teamPlayerOld.characters.length);
+    const teamPlayer = generateTeam(GameController.charactersPlayer, this.currentLevel, this.characterCount - teamPlayerOld.characters.length);
     teamPlayer.characters.push(...teamPlayerOld.characters);
     this.playerTurn = true;      
     this.dataCharacterByPosition.clear();
@@ -298,7 +294,7 @@ export default class GameController {
       const target = dataCharacterTarget.positionedCharacter;
       const damage = GameController.damageCalculation(attacker.character.attack, target.character.defence);
       this.gamePlay.showDamage(position, damage).then(() => {        
-        target.character.health -= damage;
+        target.character.health = Math.round((target.character.health - damage) * 10) / 10;
         if (target.character.health <= 0) {
           this.dataCharacterByPosition.delete(position);          
           if (!flagTeamPlayer) {
